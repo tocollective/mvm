@@ -1,0 +1,56 @@
+/*
+ * Copyright 2026 tocollective contributors
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Compile the real GC with deterministic allocation failures for this test
+// executable only. No allocator hooks are exposed by the runtime API.
+#include <stddef.h>
+#include <stdlib.h>
+#include "mvm/memory.h"
+
+size_t array_test_allocation_failures;
+size_t array_test_allocation_skip;
+
+static int array_test_fail(void) {
+  if (array_test_allocation_skip) {
+    --array_test_allocation_skip;
+    return 0;
+  }
+  if (!array_test_allocation_failures)
+    return 0;
+  --array_test_allocation_failures;
+  return 1;
+}
+
+static void *array_test_calloc(mvm_memory_t *memory, size_t count,
+                               size_t size) {
+  if (array_test_fail()) {
+    return NULL;
+  }
+  return mvm_memory_calloc(memory, count, size);
+}
+
+static void *array_test_realloc(mvm_memory_t *memory, void *pointer,
+                                size_t size) {
+  if (array_test_fail()) {
+    return NULL;
+  }
+  return mvm_memory_realloc(memory, pointer, size);
+}
+
+#define mvm_memory_calloc array_test_calloc
+#define mvm_memory_realloc array_test_realloc
+#include "../source/mvm/gc.c"
