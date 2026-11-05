@@ -133,7 +133,7 @@ if(NOT MSVC)
     target_link_libraries(${PROJECT_NAME} PRIVATE m)
 endif()
 
-add_subdirectory("${M_SOURCE_DIR}/mvm-debug" "${CMAKE_CURRENT_BINARY_DIR}/mvm-debug")
+add_subdirectory("${M_SOURCE_DIR}/mvm-dbg" "${CMAKE_CURRENT_BINARY_DIR}/mvm-dbg")
 
 if(BUILD_TESTING)
     add_executable(memory_test tests/memory_test.c ${MVM_RUNTIME_SOURCES})
